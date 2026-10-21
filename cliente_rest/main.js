@@ -39,6 +39,9 @@ function entrar() {
             token_actual = respuesta.token;     //esto lo dejo asi y ya o debo añadirlo a algun lado      
             cambiarSeccion("menu-principal");
             saludar();
+            categoria();
+            modelo();
+            ubicacion();
             ws = new WebSocket("ws://localhost:4444", "avisos");
             ws.addEventListener("open", function() {
                 console.log("Conectado al servidor de avisos");
@@ -115,6 +118,10 @@ function enviarMinisterio() {
             else if (recurso.modelo == 4) { categoria = "Desfibriladores"; }
 
             rest.get(conToken("/api/recursos/" + recurso.id + "/reservas"), function(est, reservas) {
+                if (est != 200) {
+                    alert("Error cargando las reservas");
+                    return;
+                }
                 recursos_faltan--;
                 reservas_faltan += reservas.length;
 
@@ -122,6 +129,10 @@ function enviarMinisterio() {
                     let r = reservas[j];
 
                     rest.get(conToken("/api/sanitarios/" + r.sanitario), function(est2, san) {
+                        if (est2 != 200) {
+                            alert("Error cargando el sanitario");
+                            return;
+                        }
                         reservas_faltan--;
                         datos_ministerio.push({
                             nombre: san.nombre,
@@ -141,6 +152,7 @@ function enviarMinisterio() {
                                         alert("Error enviando al Ministerio"); 
                                     }
                                     else {
+                                        
                                          alert("Enviadas " + datos_ministerio.length + " reservas"); 
                                     }
                                 });
@@ -150,6 +162,104 @@ function enviarMinisterio() {
             });
         }
     });
+}
+
+function quitarRepetidas(lista) {
+    var vistas = {};
+    var sin_repetir = [];
+    for (var i = 0; i < lista.length; i++) {
+        var r = lista[i];
+        var clave = r.area + "|" + r.d.nombre + "|" + r.d.apellidos + "|" + r.d["categoría"] + "|" +
+                    r.d.horas_estimadas + "|" + r.d.fec_pet + "|" + r.d.fec_ini + "|" + r.d.fecha_fin;
+        if (vistas[clave] !== true) {
+            vistas[clave] = true;
+            sin_repetir.push(r);
+        }
+    }
+    return sin_repetir;
+}
+
+function nombreOk(v) {
+    if (typeof v == "string" && v != "") {
+        return true;
+    }
+    return false;
+}
+
+function categoriaOk(v) {
+    if (typeof v == "string" && v != "") {
+        return true;
+    }
+    return false;
+}
+
+function horasOk(v) {
+    if (typeof v == "number" && v > 0) {
+        return true;
+    }
+    return false;
+}
+
+
+function fechaOk(v) {
+    if (typeof v != "string") {
+        return false;
+    }
+
+    var partes = v.split("T");
+
+    if (partes.length != 2) {
+        return false;
+    }
+
+    var fecha = partes[0].split("-");
+
+    if (fecha.length != 3) {
+        return false;
+    }
+
+    if (fecha[0].length != 4 ||
+        fecha[1].length != 2 ||
+        fecha[2].length != 2) {
+        return false;
+    }
+
+    return true;
+}
+
+function fechaOpcionalOk(v) {
+    if (v == null || fechaOk(v)) {
+        return true;
+    }
+    return false;
+}
+
+function inicioOk(d) {
+    if (d.fec_ini == null ||
+        new Date(d.fec_ini) >= new Date(d.fec_pet)) {
+        return true;
+    }
+    return false;
+}
+
+function finOk(d) {
+    if (d.fecha_fin == null) {
+        return true;
+    }
+
+    if (d.fec_ini != null &&
+        new Date(d.fecha_fin) >= new Date(d.fec_ini)) {
+        return true;
+    }
+    return false;
+}
+
+function areaOk(a) {
+    if (typeof a == "number" &&
+        a >= 1 && a <= 18 ) {
+        return true;
+    }
+    return false;
 }
 
 var AREAS = ["", "Alergología", "Anestesiología", "Cardiología", "Cirugía General",
@@ -176,38 +286,50 @@ function cargarRanking() {
 
         var malas = 0;        // reservas con campos incorrectos
         var areas_malas = 0;  // registros con id_area inválido o sin array
+        var buenas = [];
 
         for (var i = 0; i < registros.length; i++) {
             var area = registros[i].id_area;
             var datos = registros[i].datos;
 
-            if (area < 1 || area > 18 || !Array.isArray(datos)) {
-                alert("Falla uno de los arrays");
-                areas_malas++;
-                //return si se para y continue; si seguimos igualmente
-            }
+            if (areaOk(area) && Array.isArray(datos)) {
 
-            for (var j = 0; j < datos.length; j++) {
-                var d = datos[j];
+                for (var j = 0; j < datos.length; j++) {
+                    var d = datos[j];
 
-                if (d.nombre != null && d.nombre != "" &&
-                    d.apellidos != null && d.apellidos != "" &&
-                    d["categoría"] != null && d["categoría"] != "" &&
-                    d.horas_estimadas != null &&
-                    d.fec_pet != null && d.fec_pet != "" && d.fec_ini!== undefined && d.fecha_fin!== undefined) { //Comprobar repetido aqui y EL EXAMEN sera buscar esto pero con nueas condiciones o una nueva tabla
-                        contador[area]++;
-                } else {
-                    malas++;
-                    console.log("Los campos no son correctos")
+                    if (nombreOk(d.nombre) &&
+                        nombreOk(d.apellidos) &&
+                        categoriaOk(d["categoría"]) &&
+                        horasOk(d.horas_estimadas) &&
+                        fechaOk(d.fec_pet) &&
+                        fechaOpcionalOk(d.fec_ini) &&
+                        fechaOpcionalOk(d.fecha_fin) &&
+                        inicioOk(d) &&
+                        finOk(d)) {
+
+                        buenas.push({ area: area, d: d });
+
+                    } else {
+                        malas++;
+                    }
                 }
+
+            } else {
+                areas_malas++;
             }
+        }
+
+        var unicas = quitarRepetidas(buenas);
+        var repetidas = buenas.length - unicas.length;
+
+        for (var u = 0; u < unicas.length; u++) {
+            contador[unicas[u].area]++;
         }
 
         var lista = [];
         for (var k = 1; k <= 18; k++) {
-            if (contador[k] > 0) {
                 lista.push({ area: k, total: contador[k] });
-            }
+            
         }
         lista.sort(function(x, y) { return y.total - x.total; });
 
@@ -230,7 +352,7 @@ function cargarRanking() {
 
             cuerpo.appendChild(fila);
         }
-        alert("Reservas incorrectas: " + malas + ", registros con área inválida: " + areas_malas);
+        alert("Reservas incorrectas: " + malas + ", reservas repetidas: " + repetidas + ", registros con área inválida: " + areas_malas);
     });
 }
 
