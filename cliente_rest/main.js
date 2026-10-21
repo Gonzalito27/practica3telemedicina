@@ -292,7 +292,7 @@ function cargarRanking() {
             var area = registros[i].id_area;
             var datos = registros[i].datos;
 
-            if (areaOk(area) && Array.isArray(datos)) {
+            if (areaOk(area)) {
 
                 for (var j = 0; j < datos.length; j++) {
                     var d = datos[j];
