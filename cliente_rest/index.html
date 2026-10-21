@@ -218,10 +218,6 @@
         document.getElementById("usuario").value = "";
         document.getElementById("password").value = "";
 
-        categoria();
-        modelo();
-        ubicacion();
-
         };
 
         function editar_llevar(){
@@ -247,6 +243,7 @@
         }
 
         function salir(){
+            token_actual=null;
             ws.close();
             document.getElementById("cuerpo-tabla-avisos").innerHTML = "";
             document.getElementById("cuerpo-tabla").innerHTML = "";
