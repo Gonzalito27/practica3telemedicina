@@ -7,8 +7,8 @@ var app = express();
 const { createClient } = require('@supabase/supabase-js');
 
 // 2. Configurar con tu URL y tu Public Key (anon key) de Supabase
-const supabaseUrl = 'https://tu-proyecto.supabase.co'; // <--- Pon aquí tu URL de Supabase
-const supabaseKey = 'TU_PUBLIC_ANON_KEY_AQUI';       // <--- Pon aquí tu Anon Key
+const supabaseUrl = 'https://bfyhmsmcvgidhpyxuayn.supabase.co'; // <--- Pon aquí tu URL de Supabase
+const supabaseKey = 'sb_publishable_V8eWYhfsqnewkFe8gQkdVQ_4Dhv9jVx';       // <--- Pon aquí tu Anon Key
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 app.use(express.json()); 
