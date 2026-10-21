@@ -489,10 +489,4 @@ app.listen(3000, function(){
     console.log("Servidor escuchando en puerto 3000");
 });
 
-    /* En caso de que se caiga la base de datos
-        REPAIR TABLE mysql.global_priv;
-        REPAIR TABLE mysql.db;
-        REPAIR TABLE mysql.tables_priv;
-        REPAIR TABLE mysql.columns_priv;
-        REPAIR TABLE mysql.proxies_priv;
-    */
+    
