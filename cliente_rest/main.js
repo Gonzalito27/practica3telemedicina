@@ -206,13 +206,8 @@ function fechaOk(v) {
         return false;
     }
 
-    var partes = v.split("T");
-
-    if (partes.length != 2) {
-        return false;
-    }
-
-    var fecha = partes[0].split("-");
+    var dia = v.substring(0, 10);      
+    var fecha = dia.split("-");
 
     if (fecha.length != 3) {
         return false;
@@ -221,6 +216,10 @@ function fechaOk(v) {
     if (fecha[0].length != 4 ||
         fecha[1].length != 2 ||
         fecha[2].length != 2) {
+        return false;
+    }
+
+    if (isNaN(new Date(dia))) {
         return false;
     }
 
@@ -292,12 +291,13 @@ function cargarRanking() {
             var area = registros[i].id_area;
             var datos = registros[i].datos;
 
-            if (areaOk(area)) {
+            if (areaOk(area) && Array.isArray(datos)) {
 
                 for (var j = 0; j < datos.length; j++) {
                     var d = datos[j];
 
-                    if (nombreOk(d.nombre) &&
+                    if (typeof d == "object" && d != null && 
+                        nombreOk(d.nombre) &&
                         nombreOk(d.apellidos) &&
                         categoriaOk(d["categoría"]) &&
                         horasOk(d.horas_estimadas) &&
